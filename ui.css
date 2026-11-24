@@ -1,0 +1,84 @@
+:root {
+  --accent: #e8552b;
+  --accent-dark: #c84418;
+  --bg: #ffffff;
+  --fg: #16171c;
+  --muted: #6b6d76;
+  --line: #e7e7ea;
+  --soft: #f5f5f7;
+  --ok: #1d8a4e;
+  --bad: #c62828;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #17181c; --fg: #ececf0; --muted: #9a9ca6; --line: #2c2d33; --soft: #222329; }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font: 14px/1.45 -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+}
+button, select, input, textarea { font: inherit; color: inherit; }
+button {
+  border: 1px solid var(--line); background: var(--soft); border-radius: 8px;
+  padding: 7px 12px; cursor: pointer;
+}
+button:hover { border-color: var(--muted); }
+button:disabled { opacity: 0.6; cursor: default; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+button.primary:hover { background: var(--accent-dark); }
+button.primary.danger { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+button.link { border: 0; background: none; padding: 0; color: var(--accent); text-align: left; }
+a { color: var(--accent); }
+select, input, textarea {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--bg); padding: 6px 8px;
+}
+.hint { color: var(--muted); font-size: 12.5px; margin: 6px 0; }
+.error { color: var(--bad); font-size: 13px; margin-top: 8px; }
+.row { display: flex; align-items: center; gap: 10px; }
+.ok { color: var(--ok); }
+.bad { color: var(--bad); }
+
+/* Popup */
+body.popup { width: 400px; }
+.popup header { display: flex; align-items: center; gap: 8px; padding: 12px 14px 0; }
+.popup header h1 { font-size: 15px; margin: 0; flex: 1; }
+.popup header a { font-size: 13px; }
+.controls { padding: 10px 14px; }
+.controls .row { justify-content: space-between; }
+.lang { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.lang select { max-width: 160px; }
+.status { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+.status::before { content: "●"; margin-right: 6px; color: var(--line); }
+.status.listening::before, .status.starting::before { color: var(--accent); }
+.status.error::before { color: var(--bad); }
+.viewing { margin: 0 14px 6px; padding: 6px 10px; background: var(--soft); border-radius: 8px; font-size: 13px; }
+.tabs { display: flex; gap: 4px; padding: 0 14px; border-bottom: 1px solid var(--line); }
+.tabs button { border: 0; background: none; border-radius: 0; padding: 8px 10px; color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs button.active { color: var(--fg); border-bottom-color: var(--accent); }
+.pane { height: 300px; overflow: auto; padding: 8px 14px; }
+#transcript { padding: 0; }
+#lines { list-style: none; margin: 0; padding: 8px 14px; height: 100%; overflow: auto; }
+#lines li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+#lines .time { font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+#lines .tr { color: var(--accent-dark); margin-top: 2px; }
+@media (prefers-color-scheme: dark) { #lines .tr { color: #ff9a76; } }
+#transcript .hint { padding: 0 14px; }
+.notes h2, .notes h3 { font-size: 14px; margin: 12px 0 4px; }
+.notes ul, .notes ol { margin: 4px 0; padding-left: 18px; }
+.notes p { margin: 4px 0; }
+#historyList { list-style: none; margin: 0; padding: 0; }
+#historyList li { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.popup footer { display: flex; gap: 8px; justify-content: flex-end; padding: 10px 14px; border-top: 1px solid var(--line); }
+
+/* Options */
+body.options main { max-width: 620px; margin: 0 auto; padding: 24px 20px 80px; }
+.options header { display: flex; align-items: center; gap: 12px; }
+.options h1 { font-size: 20px; margin: 0; }
+.options h2 { font-size: 15px; margin: 0 0 6px; }
+.options section { border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-top: 16px; }
+.options label { display: flex; flex-direction: column; gap: 4px; margin: 10px 0; font-weight: 500; }
+.options label input, .options label select, .options textarea { width: 100%; font-weight: 400; }
+.options details { margin: 8px 0; }
+.options summary { cursor: pointer; color: var(--muted); }
+.sticky { position: sticky; bottom: 0; background: var(--bg); padding: 12px 0; margin-top: 16px; }

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Translator</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="popup">
+  <header>
+    <img src="icons/icon32.png" alt="" width="22" height="22">
+    <h1>Translator</h1>
+    <a id="settings" href="#" title="Settings">Settings</a>
+  </header>
+
+  <section class="controls">
+    <div id="status" class="status idle">Not listening</div>
+    <div class="row">
+      <button id="toggle" class="primary">Start on this tab</button>
+      <label class="lang">Into
+        <select id="targetLang"></select>
+      </label>
+    </div>
+    <div id="error" class="error" hidden></div>
+    <p id="hint" class="hint">Play a meeting, video or stream in this tab, then press Start. Press Alt+Shift+S to hide or show the subtitles.</p>
+  </section>
+
+  <nav class="tabs">
+    <button data-tab="transcript" class="active">Transcript</button>
+    <button data-tab="notes">Notes</button>
+    <button data-tab="history">History</button>
+  </nav>
+
+  <section id="transcript" class="pane">
+    <ol id="lines"></ol>
+    <p id="empty" class="hint">The transcript appears here as people speak.</p>
+  </section>
+
+  <section id="notes" class="pane" hidden>
+    <button id="makeNotes">Write notes from the transcript</button>
+    <div id="notesBody" class="notes"></div>
+  </section>
+
+  <section id="history" class="pane" hidden>
+    <ul id="historyList"></ul>
+    <p id="historyEmpty" class="hint">Earlier sessions are kept here (last 20).</p>
+  </section>
+
+  <footer>
+    <button id="copy">Copy</button>
+    <button id="download">Download .md</button>
+  </footer>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

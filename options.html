@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Settings – Translator</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body class="options">
+  <main>
+    <header>
+      <img src="icons/icon48.png" alt="" width="32" height="32">
+      <h1>Translator settings</h1>
+    </header>
+
+    <section>
+      <h2>AI service</h2>
+      <p class="hint">Audio from the tab you start on is sent to this service to be written down and translated. You pay the service directly; nothing goes anywhere else.</p>
+      <label>Service
+        <select id="provider"></select>
+      </label>
+      <label>API key
+        <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key">
+      </label>
+      <p class="hint"><a id="keyLink" href="#" target="_blank" rel="noopener">Get a key</a></p>
+      <details id="advanced">
+        <summary>Advanced</summary>
+        <label>Base URL
+          <input id="baseUrl" type="url" spellcheck="false">
+        </label>
+        <label>Speech-to-text model
+          <input id="hearModel" spellcheck="false">
+        </label>
+        <label>Translation and notes model
+          <input id="chatModel" spellcheck="false">
+        </label>
+      </details>
+      <div class="row">
+        <button id="check">Check key</button>
+        <span id="checkResult"></span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Subtitles</h2>
+      <label>Translate into
+        <select id="targetLang"></select>
+      </label>
+      <label>Show
+        <select id="subtitleMode">
+          <option value="both">Translation and original</option>
+          <option value="translation">Translation only</option>
+          <option value="original">Original only (no translation)</option>
+        </select>
+      </label>
+      <label>Position
+        <select id="position">
+          <option value="bottom">Bottom</option>
+          <option value="top">Top</option>
+        </select>
+      </label>
+      <label>Text size <span id="fontSizeValue"></span>
+        <input id="fontSize" type="range" min="14" max="40" step="1">
+      </label>
+    </section>
+
+    <section>
+      <h2>Word list</h2>
+      <p class="hint">Names and terms that get misheard, one per line (e.g. <code>Blossom Home Care</code>). They help both recognition and translation.</p>
+      <textarea id="wordList" rows="5" spellcheck="false"></textarea>
+    </section>
+
+    <div class="row sticky">
+      <button id="save" class="primary">Save</button>
+      <span id="saved"></span>
+    </div>
+  </main>
+  <script type="module" src="options.js"></script>
+</body>
+</html>
