@@ -69,18 +69,46 @@ export async function transcribe(settings, wavBlob, contextText) {
   return (json.text || "").trim();
 }
 
-async function chat(settings, messages, maxTokens, timeoutMs) {
+// Chat models to try, in order, when the chosen one isn't available to this key.
+const CHAT_FALLBACKS = [
+  "llama-3.3-70b-versatile", "llama-3.1-8b-instant", "openai/gpt-oss-120b", "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b", "gpt-4o-mini", "gpt-4.1-mini",
+];
+const NOT_CHAT = /whisper|transcribe|tts|guard|embed|audio|image|dall-e|moderation|orpheus|playai/i;
+
+export async function pickChatModel(settings, failed) {
+  const json = await request(settings, "/models", { method: "GET" }, 15000);
+  const ids = (json.data || []).map((m) => m.id).filter((id) => id !== failed && !NOT_CHAT.test(id));
+  return CHAT_FALLBACKS.find((m) => ids.includes(m)) || ids[0] || null;
+}
+
+let onModelSwitch = null;
+export function setModelSwitchHandler(fn) { onModelSwitch = fn; }
+
+async function chatOnce(settings, messages, maxTokens, timeoutMs) {
+  const body = { model: settings.chatModel, messages, temperature: 0.2, max_tokens: maxTokens };
+  // Reasoning models: keep thinking short so the answer fits.
+  if (/gpt-oss/.test(settings.chatModel)) { body.reasoning_effort = "low"; body.max_tokens = maxTokens + 1500; }
   const json = await request(
     settings,
     "/chat/completions",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: settings.chatModel, messages, temperature: 0.2, max_tokens: maxTokens }),
-    },
+    { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) },
     timeoutMs,
   );
   return (json.choices?.[0]?.message?.content || "").trim();
+}
+
+async function chat(settings, messages, maxTokens, timeoutMs) {
+  try {
+    return await chatOnce(settings, messages, maxTokens, timeoutMs);
+  } catch (e) {
+    if (!(e instanceof AIError) || e.kind !== "badModel") throw e;
+    const next = await pickChatModel(settings, settings.chatModel).catch(() => null);
+    if (!next) throw new AIError("badModel", `The model "${settings.chatModel}" isn't available to your key, and no other chat model was found. Pick one under Settings › Advanced.`);
+    settings.chatModel = next; // later calls use it straight away
+    onModelSwitch?.(next);
+    return chatOnce(settings, messages, maxTokens, timeoutMs);
+  }
 }
 
 export async function translate(settings, text, previousLines) {
@@ -107,7 +135,10 @@ export async function makeNotes(settings, lines, title) {
   return chat(settings, [{ role: "system", content: system }, { role: "user", content: user }], 2000, 90000);
 }
 
+// Checks the key, and returns a working chat model if the chosen one isn't offered.
 export async function checkKey(settings) {
-  await request(settings, "/models", { method: "GET" }, 15000);
-  return true;
+  const json = await request(settings, "/models", { method: "GET" }, 15000);
+  const ids = (json.data || []).map((m) => m.id);
+  if (!ids.length || ids.includes(settings.chatModel)) return { chatModel: settings.chatModel };
+  return { chatModel: await pickChatModel(settings, settings.chatModel), replaced: settings.chatModel };
 }

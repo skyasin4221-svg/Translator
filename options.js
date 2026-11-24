@@ -74,10 +74,16 @@ async function init() {
     $("checkResult").textContent = "Checking…";
     try {
       await ensureAccess(v.baseUrl);
-      await checkKey(v);
+      const res = await checkKey(v);
+      if (res.chatModel && res.chatModel !== v.chatModel) {
+        v.chatModel = res.chatModel;
+        $("chatModel").value = res.chatModel;
+      }
       await saveSettings(v);
       $("checkResult").className = "ok";
-      $("checkResult").textContent = "Key works – saved";
+      $("checkResult").textContent = res.replaced
+        ? `Key works – saved. "${res.replaced}" isn't available, so translation now uses "${res.chatModel}".`
+        : "Key works – saved";
     } catch (e) {
       $("checkResult").className = "bad";
       $("checkResult").textContent = e.message;

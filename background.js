@@ -1,7 +1,9 @@
 // Service worker: owns the session state, the offscreen audio page and the
 // subtitle overlay in the captured tab.
-import { loadSettings } from "./settings.js";
-import { makeNotes } from "./ai.js";
+import { loadSettings, saveSettings } from "./settings.js";
+import { makeNotes, setModelSwitchHandler } from "./ai.js";
+
+setModelSwitchHandler((chatModel) => saveSettings({ chatModel }));
 
 const EMPTY = { status: { state: "idle" }, lines: [], notes: "", title: "" };
 
@@ -126,6 +128,8 @@ async function onOffscreen(msg) {
       return s;
     });
     await toTab(tabId, { type: "translation", id: msg.id, translation: msg.translation });
+  } else if (msg.type === "modelSwitch") {
+    await saveSettings({ chatModel: msg.chatModel });
   } else if (msg.type === "status") {
     if (msg.state === "stopped" && session.status.state === "stopped") return;
     await update((s) => {

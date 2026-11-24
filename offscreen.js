@@ -1,7 +1,9 @@
 // Captures the tab's audio, keeps it audible, cuts it at pauses and sends each
 // piece to the AI service. Results go back to the service worker.
 import { Segmenter, downsample, encodeWav, TARGET_RATE } from "./segmenter.js";
-import { transcribe, translate, looksHallucinated, AIError } from "./ai.js";
+import { transcribe, translate, looksHallucinated, AIError, setModelSwitchHandler } from "./ai.js";
+
+setModelSwitchHandler((chatModel) => send({ type: "modelSwitch", chatModel }));
 
 let session = null;
 
@@ -90,12 +92,12 @@ function handleSegment(s, samples, startMs) {
     const result = await heard;
     s.inflight--;
     if (s.stopped && !s.draining) return;
-    if (result instanceof Error) return reportError(s, result);
+    if (result instanceof Error) return reportError(s, result, true);
     if (looksHallucinated(result)) return;
     s.recent.push(result);
     if (s.recent.length > 6) s.recent.shift();
     send({ type: "line", id, time, text: result });
-    if (s.settings.subtitleMode === "original") return;
+    if (s.settings.subtitleMode === "original" || s.translationBroken) return;
     const context = s.recent.slice(-4, -1);
     const job = translate(s.settings, result, context)
       .then((t) => send({ type: "translation", id, translation: t }))
@@ -105,10 +107,18 @@ function handleSegment(s, samples, startMs) {
   });
 }
 
-function reportError(s, e) {
+function reportError(s, e, hearing = false) {
   const kind = e instanceof AIError ? e.kind : "server";
-  send({ type: "status", state: "error", kind, message: e.message });
-  if (kind === "invalidKey" || kind === "noKey" || kind === "badModel") {
+  // A broken translation model shouldn't stop the transcript.
+  const fatal = kind === "invalidKey" || kind === "noKey" || (kind === "badModel" && hearing);
+  if (!fatal && kind === "badModel") {
+    if (s.translationBroken) return;
+    s.translationBroken = true;
+    send({ type: "status", state: "listening", message: "Translation is off: " + e.message });
+    return;
+  }
+  send({ type: fatal ? "status" : "status", state: fatal ? "error" : "listening", kind, message: e.message });
+  if (fatal) {
     s.fatal = true;
     stop();
   }
