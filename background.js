@@ -1,7 +1,7 @@
 // Service worker: owns the session state, the offscreen audio page and the
 // subtitle overlay in the captured tab.
 import { loadSettings, saveSettings } from "./settings.js";
-import { makeNotes, setModelSwitchHandler } from "./ai.js";
+import { makeNotes, translate, setModelSwitchHandler } from "./ai.js";
 
 setModelSwitchHandler((chatModel) => saveSettings({ chatModel }));
 
@@ -59,6 +59,8 @@ async function injectOverlay(tabId) {
 
 async function archive(session) {
   if (!session.lines.length) return;
+  // YouTube caption sessions can be re-read any time; keep them only if notes were written.
+  if (session.status.mode === "youtube" && !session.notes) return;
   const { history = [] } = await chrome.storage.local.get("history");
   history.unshift({
     id: session.status.startedAt || Date.now(),
@@ -85,6 +87,7 @@ async function start({ tabId, streamId, tabTitle }) {
     title: tabTitle || "",
   }));
   await ensureOffscreen();
+  chrome.tabs.sendMessage(tabId, { target: "yt", type: "pause" }).catch(() => {});
   const overlay = await injectOverlay(tabId);
   // The audio page may still be loading; retry until it answers.
   let res;
@@ -112,6 +115,7 @@ async function stop() {
   } catch { /* no offscreen page */ }
   await update((s) => { s.status = { ...s.status, state: "stopped", message: "" }; return s; });
   await toTab(session.status.tabId, { type: "stopped" });
+  if (session.status.tabId != null) chrome.tabs.sendMessage(session.status.tabId, { target: "yt", type: "resume" }).catch(() => {});
   try { await chrome.offscreen.closeDocument(); } catch { /* already closed */ }
 }
 
@@ -119,7 +123,11 @@ async function onOffscreen(msg) {
   const session = await getSession();
   const tabId = session.status.tabId;
   if (msg.type === "line") {
-    await update((s) => { s.lines.push({ id: msg.id, time: msg.time, text: msg.text, translation: "" }); return s; });
+    await update((s) => {
+      s.lines.push({ id: msg.id, time: msg.time, text: msg.text, translation: "" });
+      if (s.status.kind === "rateLimited" || /slow down|Falling behind/.test(s.status.message || "")) s.status.message = "";
+      return s;
+    });
     await toTab(tabId, { type: "line", id: msg.id, text: msg.text });
   } else if (msg.type === "translation") {
     await update((s) => {
@@ -140,6 +148,38 @@ async function onOffscreen(msg) {
   }
 }
 
+async function ytCues(msg, sender) {
+  const tabId = sender.tab?.id;
+  const current = await getSession();
+  if (current.status.state === "listening" || current.status.state === "starting") return { ok: false };
+  const same = current.status.mode === "youtube" && current.status.videoId === msg.videoId;
+  if (!same) await archive(current);
+  await update(() => ({
+    status: {
+      state: msg.state === "ready" ? "youtube" : msg.state === "none" ? "youtube-none" : "youtube-loading",
+      mode: "youtube",
+      tabId,
+      videoId: msg.videoId,
+      startedAt: same ? current.status.startedAt : Date.now(),
+      message: msg.message || "",
+    },
+    lines: msg.lines || [],
+    notes: same ? current.notes : "",
+    title: msg.title || "",
+  }));
+  return { ok: true };
+}
+
+async function translateText(msg) {
+  const settings = await loadSettings();
+  if (!settings.apiKey) return { ok: false, error: "noKey" };
+  try {
+    return { ok: true, translation: await translate(settings, msg.text, msg.context || []) };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+}
+
 async function notes() {
   const settings = await loadSettings();
   const session = await getSession();
@@ -154,9 +194,11 @@ async function notes() {
   }
 }
 
-chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
+chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   if (msg.target !== "background") return;
   const handlers = {
+    ytCues: () => ytCues(msg, sender),
+    translateText: () => translateText(msg),
     start: () => start(msg),
     stop: () => stop().then(() => ({ ok: true })),
     notes: () => notes(),

@@ -8,6 +8,7 @@ function read() {
   const v = {};
   for (const f of FIELDS) v[f] = $(f).value;
   v.fontSize = Number(v.fontSize);
+  v.youtubeCaptions = $("youtubeCaptions").checked;
   v.apiKey = v.apiKey.trim();
   v.baseUrl = v.baseUrl.trim();
   return v;
@@ -34,6 +35,8 @@ async function init() {
   for (const [code, name] of LANGUAGES) $("targetLang").add(new Option(name, code));
   const s = await loadSettings();
   for (const f of FIELDS) $(f).value = s[f];
+  $("youtubeCaptions").checked = s.youtubeCaptions !== false;
+  $("youtubeCaptions").addEventListener("change", () => saveSettings({ youtubeCaptions: $("youtubeCaptions").checked }));
   $("fontSizeValue").textContent = `${s.fontSize}px`;
   setKeyLink(s.provider);
   if (s.provider === "custom") $("advanced").open = true;

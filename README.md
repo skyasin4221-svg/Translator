@@ -6,6 +6,7 @@ It's inspired by [Cicada](https://github.com/wquguru/cicada), a desktop app that
 
 ## What it does
 
+- **YouTube mode (automatic):** on YouTube it shows the video's own captions together with YouTube's translation of them, in sync with the video. There's no delay and no AI cost, and you don't need to press anything. If YouTube can't translate into your language, the AI translates the lines as they come up. Videos with no captions fall back to listening mode (press Start).
 - **Live subtitles** over the page, showing the translation and the original line. The bar goes see-through when your pointer is over it, so the page stays clickable. It stays visible in fullscreen video.
 - **Language detection**: whatever language is spoken gets translated into the one you pick.
 - **Transcript** in the popup, with timestamps. You can copy it or download it as Markdown.
@@ -49,14 +50,14 @@ Audio from the tab you started on is cut at pauses and sent to the AI service yo
 | Service | Speech-to-text | Translation & notes | Notes |
 |---|---|---|---|
 | OpenAI | `gpt-4o-mini-transcribe` | `gpt-4o-mini` | About $0.20 per hour of audio at current prices |
-| Groq | `whisper-large-v3-turbo` | `llama-3.3-70b-versatile` | Very fast, and has a free tier with rate limits |
+| Groq | `whisper-large-v3` | `openai/gpt-oss-120b` | Very fast, and has a free tier with rate limits. If your key can't use the chosen translation model, the extension picks one it can |
 | Other | any `/audio/transcriptions` model | any `/chat/completions` model | Any OpenAI-compatible service, including a local one |
 
 You can change the models under **Settings → Advanced**.
 
 ## Limits
 
-- Subtitles appear 2 to 4 seconds after someone speaks, because each phrase is sent once there's a pause.
+- In listening mode, subtitles appear 2 to 5 seconds after someone speaks, because each phrase is sent once there's a pause. YouTube mode has no delay.
 - Browser pages (`chrome://`, the Web Store) can't be captured or drawn on.
 - It only hears one tab. It doesn't pick up desktop apps such as the Zoom desktop client. For those, use the [Cicada desktop app](https://cicada.indaloop.app).
 - It doesn't do Cicada's "speak back" (translating your own voice into the call).
@@ -73,6 +74,7 @@ You can change the models under **Settings → Advanced**.
 | `segmenter.js` | Cuts audio at pauses and encodes WAV (no browser APIs, so it's tested in Node) |
 | `ai.js` | Speech-to-text, translation and notes calls |
 | `overlay.js` | The subtitle bar on the page |
+| `youtube.js`, `yt-main.js`, `captions.js` | YouTube mode: reads the player's captions and YouTube's translations, keeps them in sync |
 | `popup.*`, `options.*`, `ui.css` | Popup and settings page |
 | `tests/` | `node tests/run.mjs` |
 

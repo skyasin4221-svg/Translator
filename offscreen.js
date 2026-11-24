@@ -78,7 +78,7 @@ async function start(streamId, settings) {
 
 function handleSegment(s, samples, startMs) {
   if (s.fatal) return;
-  if (s.inflight > 4) {
+  if (s.inflight > 8) {
     send({ type: "status", state: "listening", message: "Falling behind – skipped a few seconds." });
     return;
   }
@@ -87,7 +87,7 @@ function handleSegment(s, samples, startMs) {
   const wav = new Blob([encodeWav(samples)], { type: "audio/wav" });
   s.inflight++;
   // Transcribe now (in parallel), but publish lines in order.
-  const heard = transcribe(s.settings, wav, s.recent.slice(-2).join(" ")).catch((e) => e);
+  const heard = transcribeWithRetry(s, wav).catch((e) => e);
   s.queue = s.queue.then(async () => {
     const result = await heard;
     s.inflight--;
@@ -105,6 +105,23 @@ function handleSegment(s, samples, startMs) {
     s.translations.add(job);
     job.finally(() => s.translations.delete(job));
   });
+}
+
+// When the service says "slow down", wait and try again instead of losing the line.
+async function transcribeWithRetry(s, wav) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await transcribe(s.settings, wav, s.recent.slice(-2).join(" "));
+    } catch (e) {
+      if (!(e instanceof AIError) || attempt >= 3 || s.stopped) throw e;
+      if (e.kind === "rateLimited" && !e.outOfCredit) {
+        send({ type: "status", state: "listening", message: "The AI service asked to slow down – catching up…" });
+        await new Promise((r) => setTimeout(r, e.retryAfter * 1000));
+      } else if (e.kind === "network" || e.kind === "server") {
+        await new Promise((r) => setTimeout(r, 1500));
+      } else throw e;
+    }
+  }
 }
 
 function reportError(s, e, hearing = false) {

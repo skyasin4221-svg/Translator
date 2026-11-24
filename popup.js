@@ -21,6 +21,9 @@ const STATUS_TEXT = {
   listening: "Listening",
   stopped: "Stopped",
   error: "Problem",
+  youtube: "Showing YouTube's captions",
+  "youtube-loading": "Loading YouTube's captions…",
+  "youtube-none": "No YouTube captions",
 };
 
 function renderStatus() {
@@ -32,7 +35,9 @@ function renderStatus() {
   if (listening && session.title) text += ` · ${session.title}`;
   $("status").textContent = text;
   $("status").className = `status ${st.state}`;
-  $("toggle").textContent = listening ? "Stop" : "Start on this tab";
+  const yt = st.mode === "youtube" && here;
+  $("toggle").textContent = listening ? "Stop" : yt && st.state === "youtube" ? "Listen instead" : "Start on this tab";
+  if (yt && st.state === "youtube-none" && st.message) showError(st.message);
   $("toggle").classList.toggle("danger", listening);
   $("hint").hidden = listening || session.lines.length > 0;
   if (st.state === "error" && st.message) showError(st.message);
@@ -158,6 +163,8 @@ async function init() {
   for (const [code, name] of LANGUAGES) sel.add(new Option(name, code, false, code === settings.targetLang));
   sel.addEventListener("change", () => saveSettings({ targetLang: sel.value }));
 
+  // On YouTube, ask the page to send its captions for this video.
+  if (activeTab?.id != null) chrome.tabs.sendMessage(activeTab.id, { target: "yt", type: "report" }).catch(() => {});
   session = await bg("session");
   renderAll();
 

@@ -2,12 +2,25 @@
   "manifest_version": 3,
   "name": "Translator: Live Tab Subtitles",
   "short_name": "Translator",
-  "version": "0.1.0",
-  "description": "Live bilingual subtitles, transcript and meeting notes for any tab playing audio. Inspired by Cicada.",
+  "version": "0.2.0",
+  "description": "Live bilingual subtitles, transcript and meeting notes for any tab. On YouTube it uses the video's own captions, in sync.",
   "minimum_chrome_version": "116",
-  "permissions": ["tabCapture", "offscreen", "storage", "scripting", "activeTab"],
-  "host_permissions": ["https://api.openai.com/*", "https://api.groq.com/*"],
-  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
+  "permissions": [
+    "tabCapture",
+    "offscreen",
+    "storage",
+    "scripting",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/*",
+    "https://api.groq.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -31,8 +44,42 @@
   },
   "commands": {
     "toggle-subtitles": {
-      "suggested_key": { "default": "Alt+Shift+S" },
+      "suggested_key": {
+        "default": "Alt+Shift+S"
+      },
       "description": "Show or hide the subtitle bar"
     }
-  }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "yt-main.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "overlay.js",
+        "youtube.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "captions.js"
+      ],
+      "matches": [
+        "https://www.youtube.com/*"
+      ]
+    }
+  ]
 }

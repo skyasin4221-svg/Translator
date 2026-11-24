@@ -29,9 +29,9 @@ export class Segmenter {
     rate = TARGET_RATE,
     frameMs = 30,
     minSpeechMs = 600,
-    pauseMs = 650,
-    maxSegmentMs = 12000,
-    minSegmentMs = 1200,
+    pauseMs = 700,
+    maxSegmentMs = 15000,
+    minSegmentMs = 2000,
     onSegment,
   } = {}) {
     this.rate = rate;
@@ -63,7 +63,7 @@ export class Segmenter {
 
   frame(f) {
     const level = rms(f);
-    const isSpeech = level > Math.max(0.01, this.noise * 3);
+    const isSpeech = level > Math.max(0.006, this.noise * 2.5);
     if (!isSpeech) this.noise = this.noise * 0.95 + level * 0.05;
     const copy = Float32Array.from(f);
 

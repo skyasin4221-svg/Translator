@@ -11,8 +11,8 @@ export const PROVIDERS = {
   groq: {
     label: "Groq (fast, has a free tier)",
     baseUrl: "https://api.groq.com/openai/v1",
-    hearModel: "whisper-large-v3-turbo",
-    chatModel: "llama-3.3-70b-versatile",
+    hearModel: "whisper-large-v3",
+    chatModel: "openai/gpt-oss-120b",
     keyUrl: "https://console.groq.com/keys",
   },
   custom: {
@@ -49,6 +49,7 @@ export const DEFAULTS = {
   fontSize: 22,
   position: "bottom", // bottom | top
   wordList: "",
+  youtubeCaptions: true,
 };
 
 export async function loadSettings() {

@@ -35,7 +35,13 @@ async function request(settings, path, init, timeoutMs = 30000) {
     detail = body?.error?.message || JSON.stringify(body).slice(0, 200);
   } catch { /* ignore */ }
   if (res.status === 401 || res.status === 403) throw new AIError("invalidKey", "The AI service rejected your key. " + detail);
-  if (res.status === 429 || res.status === 402) throw new AIError("rateLimited", "Rate limit or out of credit. " + detail);
+  if (res.status === 429 || res.status === 402) {
+    const err = new AIError("rateLimited", "Rate limit or out of credit. " + detail);
+    const hinted = Number(res.headers.get("retry-after")) || Number((detail.match(/try again in ([\d.]+)s/i) || [])[1]);
+    err.retryAfter = hinted > 0 ? Math.min(hinted, 20) : 3;
+    err.outOfCredit = res.status === 402 || /quota|credit|billing/i.test(detail);
+    throw err;
+  }
   if (res.status === 404 || res.status === 400) throw new AIError("badModel", `The service refused the request (${res.status}). ${detail}`);
   throw new AIError("server", `AI service error ${res.status}. ${detail}`);
 }
@@ -63,6 +69,7 @@ export async function transcribe(settings, wavBlob, contextText) {
   form.append("file", wavBlob, "segment.wav");
   form.append("model", settings.hearModel);
   form.append("response_format", "json");
+  form.append("temperature", "0");
   const hint = [settings.wordList?.trim(), contextText?.trim()].filter(Boolean).join("\n");
   if (hint) form.append("prompt", hint.slice(-400));
   const json = await request(settings, "/audio/transcriptions", { method: "POST", body: form }, 30000);
