@@ -54,6 +54,16 @@ async function start(streamId, settings) {
     if (s.stopped) return;
     const block = downsample(e.data, ctx.sampleRate, TARGET_RATE);
     s.capturedMs += (block.length / TARGET_RATE) * 1000;
+    // Warn when the tab is silent (often a muted video or player).
+    let peak = 0;
+    for (let i = 0; i < block.length; i++) peak = Math.max(peak, Math.abs(block[i]));
+    if (peak > 0.003) {
+      s.lastSoundMs = s.capturedMs;
+      if (s.silentWarned) { s.silentWarned = false; send({ type: "status", state: "listening", message: "" }); }
+    } else if (!s.silentWarned && s.capturedMs - (s.lastSoundMs || 0) > 6000) {
+      s.silentWarned = true;
+      send({ type: "status", state: "listening", message: "No sound is coming from this tab. Is the video or meeting muted?" });
+    }
     s.segmenter.push(block);
   };
   stream.getAudioTracks()[0].addEventListener("ended", () => {

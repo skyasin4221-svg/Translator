@@ -36,7 +36,7 @@ function renderStatus() {
   $("toggle").classList.toggle("danger", listening);
   $("hint").hidden = listening || session.lines.length > 0;
   if (st.state === "error" && st.message) showError(st.message);
-  else if (st.message && listening) showError(st.message);
+  else if (listening) showError(st.message || "");
 }
 
 function current() {
