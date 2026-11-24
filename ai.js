@@ -64,7 +64,7 @@ export async function transcribe(settings, wavBlob, contextText) {
   form.append("model", settings.hearModel);
   form.append("response_format", "json");
   const hint = [settings.wordList?.trim(), contextText?.trim()].filter(Boolean).join("\n");
-  if (hint) form.append("prompt", hint.slice(-800));
+  if (hint) form.append("prompt", hint.slice(-400));
   const json = await request(settings, "/audio/transcriptions", { method: "POST", body: form }, 30000);
   return (json.text || "").trim();
 }

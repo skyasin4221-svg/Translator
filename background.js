@@ -84,7 +84,17 @@ async function start({ tabId, streamId, tabTitle }) {
   }));
   await ensureOffscreen();
   const overlay = await injectOverlay(tabId);
-  const res = await chrome.runtime.sendMessage({ target: "offscreen", type: "start", streamId, settings });
+  // The audio page may still be loading; retry until it answers.
+  let res;
+  for (let i = 0; i < 20; i++) {
+    try {
+      res = await chrome.runtime.sendMessage({ target: "offscreen", type: "start", streamId, settings });
+      if (res) break;
+    } catch (e) {
+      res = { ok: false, error: e.message };
+    }
+    await new Promise((r) => setTimeout(r, 150));
+  }
   if (!res?.ok) {
     await update((s) => { s.status = { state: "error", message: res?.error || "Couldn't start." }; return s; });
     return { ok: false, error: res?.error };
