@@ -48,6 +48,11 @@ async function init() {
   });
   $("fontSize").addEventListener("input", () => ($("fontSizeValue").textContent = `${$("fontSize").value}px`));
 
+  // Save subtitle choices as soon as they change, so nothing is lost by forgetting Save.
+  for (const f of ["targetLang", "subtitleMode", "position", "fontSize", "wordList"]) {
+    $(f).addEventListener("change", () => saveSettings({ [f]: f === "fontSize" ? Number($(f).value) : $(f).value }));
+  }
+
   $("save").addEventListener("click", async () => {
     const v = read();
     try {
@@ -70,8 +75,9 @@ async function init() {
     try {
       await ensureAccess(v.baseUrl);
       await checkKey(v);
+      await saveSettings(v);
       $("checkResult").className = "ok";
-      $("checkResult").textContent = "Key works";
+      $("checkResult").textContent = "Key works – saved";
     } catch (e) {
       $("checkResult").className = "bad";
       $("checkResult").textContent = e.message;
