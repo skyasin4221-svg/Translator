@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Translator Web</title>
+  <meta name="description" content="Live bilingual subtitles, a transcript and meeting notes for any tab, window or microphone, right in your browser.">
+  <meta name="theme-color" content="#e8552b">
+  <link rel="icon" href="../icons/icon32.png">
+  <link rel="stylesheet" href="web.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><img src="../icons/icon32.png" alt="" width="24" height="24"><span>Translator</span></div>
+    <span id="status" class="status idle">Not listening</span>
+    <button id="openSettings" class="ghost">Settings</button>
+  </header>
+
+  <main class="layout">
+    <section class="stage" aria-label="Live subtitles">
+      <div class="controls">
+        <div class="seg" role="radiogroup" aria-label="Listen to">
+          <label><input type="radio" name="source" value="display" checked><span>A tab or window</span></label>
+          <label><input type="radio" name="source" value="mic"><span>Microphone</span></label>
+        </div>
+        <label class="lang">Translate into <select id="targetLang"></select></label>
+        <button id="toggle" class="primary">Start listening</button>
+      </div>
+
+      <div id="subs" class="subs" aria-live="polite">
+        <p id="subTr" class="sub-tr"></p>
+        <p id="subOrig" class="sub-orig"></p>
+        <div id="hint" class="hint-block">
+          <p><strong>Pick what to listen to, then press Start.</strong></p>
+          <p>For a meeting or video, choose <em>A tab or window</em>, pick the tab in Chrome's dialog and tick <em>Share tab audio</em>. For people in the room, choose <em>Microphone</em>.</p>
+        </div>
+      </div>
+
+      <div class="stage-foot">
+        <p id="error" class="error" role="alert" hidden></p>
+        <button id="popout" class="ghost" hidden>Float subtitles over other windows</button>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="tabs" role="tablist">
+        <button role="tab" data-pane="transcript" aria-selected="true">Transcript</button>
+        <button role="tab" data-pane="notes" aria-selected="false">Notes</button>
+        <button role="tab" data-pane="history" aria-selected="false">History</button>
+      </div>
+      <div id="viewing" class="viewing" hidden><span id="viewingTitle"></span> <button id="backLive" class="link">Back to live</button></div>
+
+      <div class="pane" id="pane-transcript">
+        <p id="empty" class="muted">Lines show up here as people speak.</p>
+        <ol id="lines" class="lines"></ol>
+      </div>
+      <div class="pane" id="pane-notes" hidden>
+        <button id="makeNotes" class="primary">Write notes from the transcript</button>
+        <div id="notesBody" class="notes"></div>
+      </div>
+      <div class="pane" id="pane-history" hidden>
+        <p id="noHistory" class="muted">Past sessions are kept in this browser (the last 20).</p>
+        <ul id="history" class="history"></ul>
+      </div>
+
+      <div class="side-foot">
+        <button id="copy" class="ghost">Copy</button>
+        <button id="download" class="ghost">Download .md</button>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="foot">Inspired by <a href="https://github.com/wquguru/cicada" target="_blank" rel="noopener">Cicada</a>. Audio goes only to the AI service you choose; your key stays in this browser.</footer>
+
+  <dialog id="settings">
+    <form method="dialog" class="settings">
+      <h2>Settings</h2>
+      <p class="muted">Audio is sent to this service to be written down and translated. You pay the service directly.</p>
+      <label>Service <select id="provider"></select></label>
+      <label>API key <input id="apiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your key"></label>
+      <p class="muted"><a id="keyLink" href="#" target="_blank" rel="noopener">Get a key</a></p>
+      <details>
+        <summary>Advanced</summary>
+        <label>Base URL <input id="baseUrl" type="url" spellcheck="false"></label>
+        <label>Speech-to-text model <input id="hearModel" spellcheck="false"></label>
+        <label>Translation and notes model <input id="chatModel" spellcheck="false"></label>
+      </details>
+      <label>Show
+        <select id="subtitleMode">
+          <option value="both">Translation and original</option>
+          <option value="translation">Translation only</option>
+          <option value="original">Original only (no translation)</option>
+        </select>
+      </label>
+      <label>Word list <textarea id="wordList" rows="3" placeholder="Names and terms that get misheard, one per line"></textarea></label>
+      <div class="row">
+        <button type="button" id="check" class="ghost">Check key</button>
+        <span id="checkResult" class="muted"></span>
+      </div>
+      <div class="row end">
+        <button value="cancel" class="ghost">Close</button>
+        <button type="button" id="save" class="primary">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

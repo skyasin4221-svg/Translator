@@ -16,6 +16,17 @@ It's inspired by [Cicada](https://github.com/wquguru/cicada), a desktop app that
 
 The tab keeps playing sound normally while it's being captured. Nobody else in the meeting can see it, because no bot joins the call.
 
+## Web version (no install)
+
+Open **https://skyasin4221-svg.github.io/Translator/** in Chrome or Edge on a computer. It does the same job in a normal web page:
+
+- **A tab or window**: press Start, pick the tab in the browser's dialog and tick **Share tab audio**.
+- **Microphone**: for people in the same room.
+- **Float subtitles over other windows** keeps the subtitles on top while you use another app (Chrome and Edge 116+).
+- Transcript, notes, history (kept in your browser), Copy and Download .md work like the extension.
+
+Your key is saved only in that browser's local storage. The code is in [`web/`](web/) and reuses the extension's modules.
+
 ## Install (developer mode)
 
 1. Download this repo: **Code → Download ZIP**, then unzip it (or `git clone` it).
